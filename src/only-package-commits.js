@@ -1,11 +1,11 @@
-const { identity, memoizeWith, pipeP } = require('ramda');
-const pkgUp = require('pkg-up');
-const readPkg = require('read-pkg');
-const path = require('path');
-const pLimit = require('p-limit');
-const debug = require('debug')('semantic-release:monorepo');
-const { getCommitFiles, getRoot } = require('./git-utils');
-const { mapCommits } = require('./options-transforms');
+const { identity, memoizeWith, pipeP } = require("ramda");
+const pkgUp = require("pkg-up");
+const readPkg = require("read-pkg");
+const path = require("path");
+const pLimit = require("p-limit");
+const debug = require("debug")("semantic-release:monorepo");
+const { getCommitFiles, getRoot } = require("./git-utils");
+const { mapCommits } = require("./options-transforms");
 
 const memoizedGetCommitFiles = memoizeWith(identity, getCommitFiles);
 
@@ -16,7 +16,7 @@ const getPackagePath = async () => {
   const packagePath = await pkgUp();
   const gitRoot = await getRoot();
 
-  return path.relative(gitRoot, path.resolve(packagePath, '..'));
+  return path.relative(gitRoot, path.resolve(packagePath, ".."));
 };
 
 const withFiles = async commits => {
@@ -36,7 +36,11 @@ const onlyPackageCommits = async commits => {
   debug('Filter commits by package path: "%s"', packagePath);
   const commitsWithFiles = await withFiles(commits);
   // Convert package root path into segments - one for each folder
-  const packageSegments = packagePath.split(path.sep);
+  const packageSegments = packagePath
+    .split(path.sep)
+    // filters out the build folder to check the base
+    // package folder against changes in commits
+    .filter(segment => segment !== "build");
 
   return commitsWithFiles.filter(({ files, subject }) => {
     // Normalise paths and check if any changed files' path segments start
@@ -71,7 +75,7 @@ const logFilteredCommitCount = logger => async ({ commits }) => {
   const { name } = await readPkg();
 
   logger.log(
-    'Found %s commits for package %s since last release',
+    "Found %s commits for package %s since last release",
     commits.length,
     name
   );
